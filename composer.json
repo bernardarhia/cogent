@@ -1,7 +1,7 @@
 {
     "autoload": {
         "psr-4": {
-            "Articulate\\":"lib/Articulate"
+            "Cogent\\":"lib/Cogent"
         }
     }
 }
