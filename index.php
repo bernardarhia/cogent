@@ -1,15 +1,19 @@
 <?php
 
 use Cogent\DB\Cogent;
+use Cogent\Models\Model;
 
 include_once __DIR__ . "/vendor/autoload.php";
 
 include_once __DIR__ . "/models/User.php";
 
 Cogent::connection("mysql/localhost/root/test1", function ($error) {
-    // print_r($error);
+    if ($error) die("An error occurred");
 });
 
-Users::insert([], function ($data, $err) {
-    print_r($err);
-});
+$user = new Users(["first_name" => "Bernard", "last_name" => "Arhia"]);
+// $r = $user->save(function ($err, $data) {
+//     print_r([$err, $data]);
+// });
+$r = Users::find();
+print_r($r);
