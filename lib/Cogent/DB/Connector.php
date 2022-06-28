@@ -8,7 +8,7 @@ use PDO as DBConnector;
 class Connector extends DBConnector
 {
     private $connection;
-    public function __construct(string $engine = null, string $dbName = null, string $dbHost = null, string $dbUser = null, string $dbPass = null)
+    public function __construct(string $engine = null, string $dbName = null, string $dbHost = null, string $dbUser = null, string $dbPass = null, $options = null)
     {
 
         $this->dbName = $dbName;
@@ -19,11 +19,11 @@ class Connector extends DBConnector
         try {
             //code...
             if ($this->dbName == null) {
-                parent::__construct("$this->engine:host=$this->dbHost", $this->dbUser, $this->dbPass);
-                $this->connection = new DBConnector("$this->engine:host=$this->dbHost", $this->dbUser, $this->dbPass);
+                parent::__construct("$this->engine:host=$this->dbHost", $this->dbUser, $this->dbPass, $options);
+                $this->connection = new DBConnector("$this->engine:host=$this->dbHost", $this->dbUser, $this->dbPass, $options);
             } else {
                 parent::__construct("$this->engine:host=$this->dbHost;dbname=$this->dbName", $this->dbUser, $this->dbPass);
-                $this->connection = new DBConnector("$this->engine:host=$this->dbHost;dbname=$this->dbName", $this->dbUser, $this->dbPass);
+                $this->connection = new DBConnector("$this->engine:host=$this->dbHost;dbname=$this->dbName", $this->dbUser, $this->dbPass, $options);
             }
             return $this->connection;
         } catch (\Exception $e) {

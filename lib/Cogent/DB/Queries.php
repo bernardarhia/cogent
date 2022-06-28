@@ -34,7 +34,7 @@ class Queries
      * 
      * @param string|null $connectionString Format == dialect/host/user/database/password
      */
-    static function connection($connectionString = null, $callback = null)
+    static function connection($connectionString = null, $options = null, $callback = null)
     {
         $connectionString = trim($connectionString);
 
@@ -55,7 +55,7 @@ class Queries
             $user = $filteredArray[2] ?? null;
             $database = $filteredArray[3] ?? null;
             $password = $filteredArray[4] ?? null;
-            self::$connection = new Connector($dialect, $database, $host, $user, $password);
+            self::$connection = new Connector($dialect, $database, $host, $user, $password, $options);
 
             if (self::$connection) return true;
             throw new \Exception("Unable to connect to database", 1);

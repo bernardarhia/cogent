@@ -2,9 +2,7 @@
 
 namespace Cogent\Schemas;
 
-use Cogent\Interfaces\DataTypesInterface;
-
-class Schema implements DataTypesInterface
+class Schema
 {
     public $data = null;
     static $enum = [];

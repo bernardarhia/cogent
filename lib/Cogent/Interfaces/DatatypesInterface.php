@@ -52,4 +52,6 @@ interface DataTypesInterface
     const MultiLineString = "MultiLineString";
     const MultiPolygon = "MultiPolygon";
     const GeometryCollection = "GeometryCollection";
+
+    const SELECT = "select";
 }
