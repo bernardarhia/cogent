@@ -81,4 +81,9 @@ class Cogent extends Model implements SchemaInterface
             self::$error = Error::createError($th->getMessage(), Error::TRUNCATE_ERROR);
         }
     }
+
+    static function fn($fn, $col)
+    {
+        return "$fn($col)";
+    }
 }

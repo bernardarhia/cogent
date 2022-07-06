@@ -95,4 +95,37 @@ trait HelpersController
         }
         return $data;
     }
+
+    static function isString($data)
+    {
+        return is_string($data);
+    }
+    static function isArray($data)
+    {
+        return is_array($data);
+    }
+    static function isInt($data)
+    {
+        return is_int($data);
+    }
+    static function isFloat($data)
+    {
+        return is_float($data);
+    }
+    static function isBool($data)
+    {
+        return is_bool($data);
+    }
+    static function isNull($data)
+    {
+        return is_null($data);
+    }
+    static function isObject($data)
+    {
+        return is_object($data);
+    }
+    static function isResource($data)
+    {
+        return is_resource($data);
+    }
 }

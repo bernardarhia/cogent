@@ -2,151 +2,17 @@
 
 namespace Cogent\Models;
 
-use Cogent\DataTypes\DataTypes;
 use Cogent\DB\Connector;
 use Cogent\DB\Queries;
+use Cogent\Models\Queries as ModelQUeries;
 use Cogent\Helpers\Error;
 use Cogent\Helpers\HelpersController;
 
 class Model extends Queries
 {
     /**
-     * 
-     * 
-     * 
      */
-    static function  find($data = [], $selectable = null, $callback = null)
-    {
-        self::reset();
 
-        // get current class name
-        $className = strtolower(get_called_class());
-        self::$query = "SELECT ";
-
-        if (is_null($selectable) || $selectable == "*" || empty(trim($selectable)) || !$selectable) {
-            self::$query .= "* FROM $className";
-        } else {
-            self::$query .= implode(", ", explode(" ", $selectable)) . " FROM $className";
-        }
-        if (is_array($data) && $data != array_values($data)) {
-            self::$query .= " WHERE ";
-            $i = 0;
-
-            foreach ($data as $key => $value) {
-                if ($i > 0) {
-                    self::$query .= " AND ";
-                }
-                static::$executeArray[$key] = $value;
-                self::$query .= "`$key` = :$key";
-                $i++;
-            }
-            self::$query .= ";";
-        } else if (is_array($data) && count($data) == 0) {
-            self::$query .= ";";
-        }
-        try {
-            $stmt = self::$connection->prepare(self::$query);
-            $stmt->execute(static::$executeArray);
-            self::$result = $stmt->fetchAll(Connector::FETCH_OBJ);
-            self::$executed = true;
-        } catch (\Throwable $th) {
-            self::$error = Error::createError($th->getMessage(), Error::FIND_ERROR);
-        }
-
-        if (is_callable($callback)) {
-            $callback(static::$result, static::$error);
-        }
-
-        return (object)self::$result;
-    }
-
-    static function  findOne($data, $selectable = null, $callback = null)
-    {
-        self::reset();
-
-        if (empty($data) || count($data) == 0) throw new \Exception("Provide a key value pair to search with");
-        // get current class name
-        $className = strtolower(get_called_class());
-        self::$query = "SELECT ";
-
-        if (is_null($selectable) || $selectable == "*" || empty(trim($selectable)) || !$selectable) {
-            self::$query .= "* FROM $className";
-        } else {
-            self::$query .= implode(", ", explode(" ", $selectable)) . " FROM $className";
-        }
-        if (is_array($data) && $data != array_values($data)) {
-            self::$query .= " WHERE ";
-            $i = 0;
-
-            foreach ($data as $key => $value) {
-                if ($i > 0) {
-                    self::$query .= " AND ";
-                }
-                static::$executeArray[$key] = $value;
-                self::$query .= "`$key` = :$key";
-                $i++;
-            }
-            self::$query .= ";";
-        } else if (is_array($data) && count($data) == 0) {
-            self::$query .= ";";
-        }
-        try {
-            $stmt = self::$connection->prepare(self::$query);
-            $stmt->execute(static::$executeArray);
-            self::$result = $stmt->fetch(Connector::FETCH_OBJ);
-            self::$executed = true;
-        } catch (\Throwable $th) {
-            self::$error = Error::createError($th->getMessage(), Error::FIND_ERROR);
-        }
-
-        if (is_callable($callback)) {
-            $callback(static::$result, static::$error);
-        }
-
-        return (object)self::$result;
-    }
-
-    static function delete($data, $callback = null)
-    {
-        self::reset();
-
-        // get current class name
-        $className = strtolower(get_called_class());
-        self::$query = "DELETE FROM " . $className;
-
-        if (is_array($data) && $data != array_values($data)) {
-            self::$query .= " WHERE ";
-            $i = 0;
-
-            foreach ($data as $key => $value) {
-                if ($i > 0) {
-                    self::$query .= " AND ";
-                }
-                static::$executeArray[$key] = $value;
-                self::$query .= "`$key` = :$key";
-                $i++;
-            }
-            self::$query .= ";";
-        } else if (is_array($data) && count($data) == 0) {
-            self::$query .= ";";
-        }
-        try {
-            $stmt = self::$connection->prepare(self::$query);
-
-            self::$executed = $stmt->execute(static::$executeArray);;
-            self::$result = [
-                "executed" => self::$executed,
-                "affectedRows" => $stmt->rowCount(),
-            ];
-        } catch (\Throwable $th) {
-            self::$error = Error::createError($th->getMessage(), Error::FIND_ERROR);
-        }
-
-        if (is_callable($callback)) {
-            $callback(static::$result, static::$error);
-        }
-        return (object)self::$result;
-    }
     /**
      * 
      * 
@@ -218,55 +84,63 @@ class Model extends Queries
         return (object) self::$result;
     }
 
-    /**
-     * 
-     * 
-     * 
-     * 
-     * 
-     */
-    static function update($data, $updatable, $callback)
+    static function find($options = null, $callback = null)
     {
         self::reset();
-        $className = strtolower(get_called_class());
-        self::$query = "UPDATE " . $className . " SET";
-        if (!is_null($data) && is_array($data) && array_values($data) != $data) {
-            foreach ($data as $key => $value) {
-                self::$query .= " $key = :$key,";
-                self::$executeArray[":" . $key] = $value;
+        try {
+            // Create the table if it doesn't exist
+            // $class = new $calledClass;
+            $class = new Model;
+            $class->createTable();
+            // Find data
+            $sql = ModelQUeries::SELECT . " ";
+            if (!isset($options['attributes'])) {
+                $sql .= "* ";
             }
-        }
-        if (!is_null($updatable) && is_array($updatable)) {
-            self::$query = substr(self::$query, 0, -1) . " WHERE ";
 
-            // Checks if updatable is an array with three items [column operator value]
-            foreach ($updatable as $key => $value) {
-                if (is_array($value)) {
-                    self::$executeArray[":" . $value[0]] = $value[2];
-                    self::$query .= $value[0] . " " . $value[1] . " :" . $value[0] . " AND ";
+            if (isset($options['attributes'])) {
+                $attributes = $options['attributes'];
+                if (!HelpersController::isArray($attributes)) {
+                    $sql .= "* ";
                 } else {
-                    self::$executeArray[":" . $key] = $value;
-                    self::$query .= "$key = :$key AND ";
+                    foreach ($attributes as $key => $value) {
+
+                        // Check if the value passed in the attribute is a string
+                        if (HelpersController::isString($value)) {
+                            $sql .= "`$value`, ";
+                        }
+                        if (HelpersController::isArray($value)) {
+                            $sql .= "`$value[0]` as `$value[1]`, ";
+                        }
+                    }
                 }
             }
-            self::$query =  substr(self::$query, 0, -4);
-        }
+            $sql = substr($sql, 0, strlen($sql) - 2);
 
-        try {
-            $stmt = self::$connection->prepare(self::$query);
-            self::$executed = $stmt->execute(self::$executeArray);
-            self::$result = [
-                "executed" => self::$executed,
-                "affectedRows" => $stmt->rowCount(),
-            ];
-        } catch (\Throwable $th) {
-            self::$error = Error::createError($th->getMessage(), Error::UPDATE_ERROR);
-        }
+            $sql .= " FROM `" . strtolower(self::$className) . "` ";
 
+            // Check if the conditions are set
+            if (isset($options['conditions'])) {
+                $sql .= "where ";
+                $conditions = $options['conditions'];
+
+                foreach ($conditions as $key => $value) {
+                    if (HelpersController::isString($key)) {
+                        if (HelpersController::isString($value)) {
+                            $sql .= "`$key` = ':$key' and ";
+                        }
+                    }
+                }
+            }
+            self::$result = $sql;
+        }
+        // Catch error
+        catch (\Throwable $th) {
+            self::$error = Error::createError($th->getMessage(), Error::SELECT_ERROR);
+        }
         if (is_callable($callback)) {
             $callback(self::$result, (object)self::$error);
         }
-
         return (object) self::$result;
     }
 }

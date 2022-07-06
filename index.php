@@ -10,8 +10,23 @@ Cogent::connection("mysql/localhost/root/test1", null, function ($error) {
     if ($error) die("An error occurred");
 });
 
-$users = new Users([
-    "first_name" => "Bernard",
-    "last_name" => "Arhia"
-]);
-$result = $users->save();
+$r = Users::find([
+    "attributes" => [
+        "id",
+        "name",
+        ["email", "another_email"],
+        [Cogent::fn("COUNT", "id"), "total"]
+    ],
+    "conditions" => [
+        "id" => [
+            Cogent::fn("NOT IN", "1,2,3"),
+        ],
+        "name" => "John",
+        "age" => "kwesi",
+    ],
+], function ($result, $err) {
+    print_r([
+        "err" => $err,
+        "result" => $result
+    ]);
+});
