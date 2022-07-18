@@ -15,6 +15,9 @@ class Queries
     protected static $executeArray = null;
     protected static $query = null;
     protected static $connection = null;
+    protected static $fetchMode = [
+        "ONE", "ALL"
+    ];
     /**
      * 
      * @param string[]|null $data 

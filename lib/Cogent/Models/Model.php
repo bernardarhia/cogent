@@ -2,7 +2,6 @@
 
 namespace Cogent\Models;
 
-use Cogent\DB\Connector;
 use Cogent\DB\Queries;
 use Cogent\Models\Queries as ModelQUeries;
 use Cogent\Helpers\Error;
@@ -93,46 +92,19 @@ class Model extends Queries
             $class = new Model;
             $class->createTable();
             // Find data
-            $sql = ModelQUeries::SELECT . " ";
-            if (!isset($options['attributes'])) {
-                $sql .= "* ";
+            self::$query = ModelQUeries::SELECT . " ";
+            // check if it's an array
+            if (is_null($options) || empty(($options)) || count($options) == 0) {
+                self::$query .= "*";
             }
 
-            if (isset($options['attributes'])) {
-                $attributes = $options['attributes'];
-                if (!HelpersController::isArray($attributes)) {
-                    $sql .= "* ";
-                } else {
-                    foreach ($attributes as $key => $value) {
-
-                        // Check if the value passed in the attribute is a string
-                        if (HelpersController::isString($value)) {
-                            $sql .= "`$value`, ";
-                        }
-                        if (HelpersController::isArray($value)) {
-                            $sql .= "`$value[0]` as `$value[1]`, ";
-                        }
-                    }
-                }
+            if (is_array($options)) {
+            } else {
+                self::$query .= $options;
             }
-            $sql = substr($sql, 0, strlen($sql) - 2);
+            // If data passed in is a string
 
-            $sql .= " FROM `" . strtolower(self::$className) . "` ";
-
-            // Check if the conditions are set
-            if (isset($options['conditions'])) {
-                $sql .= "where ";
-                $conditions = $options['conditions'];
-
-                foreach ($conditions as $key => $value) {
-                    if (HelpersController::isString($key)) {
-                        if (HelpersController::isString($value)) {
-                            $sql .= "`$key` = ':$key' and ";
-                        }
-                    }
-                }
-            }
-            self::$result = $sql;
+            self::$query .= " from `" . strtolower(self::$className) . "`";
         }
         // Catch error
         catch (\Throwable $th) {
@@ -141,6 +113,10 @@ class Model extends Queries
         if (is_callable($callback)) {
             $callback(self::$result, (object)self::$error);
         }
-        return (object) self::$result;
+        return self::$query;
+    }
+
+    function or($data = [])
+    {
     }
 }
