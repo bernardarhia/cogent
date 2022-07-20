@@ -3,7 +3,7 @@
 namespace Cogent\Models;
 
 use Cogent\DB\Queries;
-use Cogent\Models\Queries as ModelQUeries;
+use Cogent\Models\Keywords;
 use Cogent\Helpers\Error;
 use Cogent\Helpers\HelpersController;
 
@@ -92,15 +92,18 @@ class Model extends Queries
             $class = new Model;
             $class->createTable();
             // Find data
-            self::$query = ModelQUeries::SELECT . " ";
+            self::$query = KEYWORDS::SELECT . " ";
             // check if it's an array
             if (is_null($options) || empty(($options)) || count($options) == 0) {
                 self::$query .= "*";
             }
 
             if (is_array($options)) {
-            } else {
-                self::$query .= $options;
+                foreach ($options as $key => $value) {
+                    if (is_string($key)) self::$query .= "$key as `$value`, ";
+                    else self::$query .= "`$value`, ";
+                }
+                self::$query = substr(self::$query, 0, strlen(self::$query) - 2);
             }
             // If data passed in is a string
 
@@ -113,10 +116,154 @@ class Model extends Queries
         if (is_callable($callback)) {
             $callback(self::$result, (object)self::$error);
         }
-        return self::$query;
+        return new static;
     }
 
     function or($data = [])
     {
+        // Remove or and from the end of the query
+        self::$query = trim(self::removeAndOr(self::$query));
+        self::$query .= " OR ";
+        return new static;
+    }
+
+    static function where(...$args)
+    {
+        if (empty($args) || count($args) == 0) throw new \Exception("No data passed in");
+        // Remove or and from the end of the query
+        $split = explode(" ", trim(self::$query));
+        $lastWord = trim($split[count($split) - 1]);
+
+        // return new static;
+
+        // Check if string has the key word AND or OR then remove them
+        if (!in_array(strtolower($lastWord), ["or", "and"])) {
+            self::$query .= " " . KEYWORDS::WHERE . " ";
+        }
+
+        // check if the args passed was one and if it was an array
+        if (count($args) == 1 && is_array($args[0])) {
+            $args = $args[0];
+            /**
+             * Loop through the array and create key value pair for each item
+             * but if the value is an array then loop through it and map it to the key of the array
+             * 
+             */
+            foreach ($args as $key => $value) {
+                if (is_string($value)) {
+                    self::$query .= ("`$key` $value AND ");
+                }
+                if (is_array($value)) {
+                    foreach ($value as $k => $v) {
+                        // IF the items passed are normal array items
+                        if (is_numeric($k)) self::$query .= ("$key $v AND ");
+
+                        /* pass in the sql of the value
+                        this was done because keywords like between are written as named parameters 
+                        **/
+                        if (is_string($k)) {
+                            self::$query .= $key . " " . $value['sql'];
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * 
+      Arguments are two example (id, 1) or  (id, [1,2,3])
+         */
+        else if (count($args) == 2) {
+            if (!is_array($args[1])) {
+                self::$query .= " (`$args[0]` = '$args[1]') AND";
+            } else if (is_array($args[1])) {
+                foreach ($args[1] as $key => $value) {
+                    self::$query .= " (`$args[0]` = '$value') AND";
+                }
+            }
+        }
+        /**
+         * 
+      Arguments are two example (id,>, 1)
+         */
+        else if (count($args) == 3) {
+            self::$query .= " (" . $args[0] . " " . $args[1] . " " . $args[2] . ") AND";
+        }
+        return new static;
+    }
+    function whereLike($data = null)
+    {
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                self::$query .= "`$key` LIKE :$key AND ";
+            }
+            self::$query = substr(self::$query, 0, strlen(self::$query) - 4);
+        }
+    }
+    function whereNotLike($data = null)
+    {
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                self::$query .= "`$key` NOT LIKE :$key AND ";
+            }
+            self::$query = substr(self::$query, 0, strlen(self::$query) - 4);
+        }
+    }
+
+    function whereIn($field = null, $data)
+    {
+        self::$query .= "`$field` IN (" . implode(",", $data) . ")";
+    }
+    function whereNotIn($data = null)
+    {
+    }
+    function whereBetween($data = null)
+    {
+    }
+    function whereNotBetween($data = null)
+    {
+    }
+    function whereNull($data = null)
+    {
+    }
+    function whereNotNull($data = null)
+    {
+    }
+
+    function limit($number)
+    {
+        self::$query .= " " . KEYWORDS::LIMIT . "  $number";
+        return new static;
+    }
+    function groupBy($field)
+    {
+        self::$query = trim(self::removeAndOr(self::$query));
+        self::$query .= " " . KEYWORDS::GROUP_BY . " $field";
+        return new static;
+    }
+    function orderBy($field, $sortType = "ASC")
+    {
+        self::$query = trim(self::removeAndOr(self::$query));
+        self::$query .= " " . KEYWORDS::ORDER_BY . " $field $sortType";
+        return new static;
+    }
+
+    function get($callback = null)
+    {
+
+        print_r(self::$query);
+    }
+
+    static function removeAndOr($query)
+    {
+        $split = explode(" ", trim($query));
+        $lastWord = ($split[count($split) - 1]);
+        $lastWordCount  = strlen($lastWord);
+
+        if (in_array(strtolower($lastWord), ["and", "or"])) {
+            $query = substr($query, 0, -$lastWordCount - 1);
+        }
+        return $query;
     }
 }

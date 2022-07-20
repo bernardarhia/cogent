@@ -1,7 +1,7 @@
 <?php
 
 use Cogent\DB\Cogent;
-
+use Cogent\Operators\Op;
 
 include_once __DIR__ . "/vendor/autoload.php";
 
@@ -12,12 +12,5 @@ Cogent::connection("mysql/localhost/root/test1", null, function ($error) {
 });
 
 
-$r = Users::find([
-    Cogent::fn("COUNT", "id") => "total_id",
-    "SUM(id)" => "total_id_sum",
-    "name"
-], function ($r, $err) {
-    // print_r($err);
-});
-
-print_r($r);
+$r = Users::find()
+    ->where(["id" => [OP::IN(1, 2, 3), OP::GT(Cogent::fn("COUNT", "id"))], "name" => "ben"])->groupBy("name")->get();

@@ -128,4 +128,15 @@ trait HelpersController
     {
         return is_resource($data);
     }
+
+    static function removeFromBack($string, $remove)
+    {
+        return substr($string, 0, -$remove);
+    }
+
+    static function lastWord($string)
+    {
+        $words = explode(" ", $string);
+        return trim($words[count($words) - 1]);
+    }
 }

@@ -15,6 +15,7 @@ class Error
     const SELECT_ERROR = 2241;
     const FIND_ERROR = 2242;
 
+
     public static function createError($message = null, $code = null)
     {
         return (object) [

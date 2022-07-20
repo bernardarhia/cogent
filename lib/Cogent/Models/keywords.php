@@ -3,9 +3,11 @@
 
 namespace Cogent\Models;
 
-class Queries
+class KEYWORDS
 {
     const SELECT = "SELECT";
+    const WHERE = "WHERE";
+    const OR = "OR";
     const INSERT = "INSERT";
     const UPDATE = "UPDATE";
     const DELETE = "DELETE";
@@ -57,8 +59,16 @@ class Queries
     const GROUP_BY = "GROUP BY";
     const HAVING = "HAVING";
     const LIMIT = "LIMIT";
+    const SORT = "SORT";
     const OFFSET = "OFFSET";
     const UNION = "UNION";
     const UNION_ALL = "UNION ALL";
     const INTERSECT = "INTERSECT";
+    const EXCEPT = "EXCEPT";
+    const SET_OPTION = "SET OPTION";
+    const SQL_CACHE = "SQL_CACHE";
+    const SQL_NO_CACHE = "SQL_NO_CACHE";
+    const SQL_CACHE_TS = "SQL_CACHE_TS";
+    const SQL_NO_CACHE_TS = "SQL_NO_CACHE_TS";
+    const SQL_CACHE_INDEX = "SQL_CACHE_INDEX";
 }
