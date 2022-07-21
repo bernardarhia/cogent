@@ -1,7 +1,8 @@
 <?php
-$str = "kofi and ama are going ";
-$strlen = strlen($str);
-$splitted = explode(" ", trim($str));
-$lastWord = $splitted[count($splitted) - 1];
-echo strlen($lastWord);
-echo substr($str, 0, -strlen($lastWord) - 1);
+function name(...$args, $callback)
+{
+    print_r(...$args);
+    print_r($callback);
+}
+name("1", "2", "3", "4", "5", "function () {
+}");

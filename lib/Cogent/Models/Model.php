@@ -101,7 +101,7 @@ class Model extends Queries
             if (is_array($options)) {
                 foreach ($options as $key => $value) {
                     if (is_string($key)) self::$query .= "$key as `$value`, ";
-                    else self::$query .= "`$value`, ";
+                    else self::$query .= "$value, ";
                 }
                 self::$query = substr(self::$query, 0, strlen(self::$query) - 2);
             }
@@ -116,6 +116,21 @@ class Model extends Queries
         if (is_callable($callback)) {
             $callback(self::$result, (object)self::$error);
         }
+        return new static;
+    }
+
+    static function update($rules)
+    {
+        self::reset();
+        if (!is_array($rules) || array_values($rules) == $rules) throw new \Exception("Update error");
+
+        self::$query = KEYWORDS::UPDATE . " " . strtolower(self::$className) . " " . KEYWORDS::SET . " ";
+        // self::$query .= implode(",", ($rules));
+        foreach ($rules as $key => $value) {
+            self::$query .= "`$key` = :$key, ";
+            self::$executeArray[":$key"] = $value;
+        }
+        self::$query = substr(self::$query, 0, strlen(self::$query) - 2);
         return new static;
     }
 
@@ -252,7 +267,7 @@ class Model extends Queries
     function get($callback = null)
     {
 
-        print_r(self::$query);
+        echo (self::$query) . "\n";
     }
 
     static function removeAndOr($query)
@@ -265,5 +280,16 @@ class Model extends Queries
             $query = substr($query, 0, -$lastWordCount - 1);
         }
         return $query;
+    }
+
+    static function sum($column, $alias = null)
+    {
+    }
+    static function count($column, $alias = null)
+    {
+        self::$query .= "COUNT($column)";
+
+        !is_null($alias) ? self::$query .= " as $alias" : "";
+        return new static;
     }
 }
