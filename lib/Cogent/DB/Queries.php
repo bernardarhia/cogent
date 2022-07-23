@@ -15,9 +15,13 @@ class Queries
     protected static $executeArray = null;
     protected static $query = null;
     protected static $connection = null;
-    protected static $fetchMode = [
-        "ONE", "ALL"
-    ];
+    /**
+     * 
+     * @param object $fetchMode
+     */
+    protected static $fetch_all = null;
+    protected static $fetch_one = null;
+    protected static $fetchModeDefault = "OBJ";
     /**
      * 
      * @param string[]|null $data 
@@ -81,10 +85,11 @@ class Queries
     protected static function reset()
     {
         // self::$data = null;
-        self::$error = null;
-        self::$result = null;
         self::$executed = null;
         self::$executeArray = null;
         self::$query = null;
+        // self::$connection = null;
+        self::$fetch_all = null;
+        self::$fetch_one = null;
     }
 }

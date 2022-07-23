@@ -82,8 +82,8 @@ class Cogent extends Model implements SchemaInterface
         }
     }
 
-    static function fn($fn, $col)
+    static function fn($fn, $col, $alias = null)
     {
-        return "$fn($col)";
+        return "$fn($col)" . (is_null($alias) ? "" : " AS $alias");
     }
 }

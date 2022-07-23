@@ -11,37 +11,56 @@ class Op
     const LT = "<";
     const LTE = "<=";
 
-    static function GT($number)
+    static function GT($column)
     {
-        return self::GT . " " . $number;
+        return  (object) [
+            "operator" => self::GT,
+            "value" => $column
+        ];
     }
-    static function EQ($number)
+    static function EQ($column)
     {
-        return self::EQ . " " . $number;
+        return  (object) [
+            "operator" => self::EQ,
+            "value" => $column
+        ];
     }
-    static function NEQ($number)
+    static function NEQ($column)
     {
-        return self::NEQ . " " . $number;
+        return  (object) [
+            "operator" => self::NEQ,
+            "value" => $column
+        ];
     }
-    static function LT($number)
+    static function LT($column)
     {
-        return self::LT . " " . $number;
+        return  (object) [
+            "operator" => self::LT,
+            "value" => $column
+        ];
     }
-    static function LTE($number)
+    static function LTE($column)
     {
-        return self::LTE . " " . $number;
+        return  (object) [
+            "operator" => self::LTE,
+            "value" => $column
+        ];
     }
-    static function GTE($number)
+    static function GTE($column)
     {
-        return self::GTE . " " . $number;
+        return  (object) [
+            "operator" => self::GTE,
+            "value" => $column
+        ];
     }
 
     static function IN(...$args)
     {
-        return "IN ('" . implode("', '", $args) . "')";
+        return (object) ["sql" => "IN ('" . implode("', '", $args) . "')"];
     }
     static function LIKE($string)
     {
+
         return "LIKE '$string'";
     }
 
@@ -63,10 +82,10 @@ class Op
     }
     static function BETWEEN($arg1, $arg2)
     {
-        $btw1 =   "btw" . random_int(0, 2000);
-        $btw2 =   "btw" . random_int(0, 2000);
+        $btw1 =   "__btw1";
+        $btw2 =   "__btw2";
 
-        return [
+        return (object)[
             "sql" => "BETWEEN :" . $btw1 . " AND :" . $btw2,
             "params" => [
                 $btw1 => $arg1,
@@ -74,17 +93,17 @@ class Op
             ]
         ];
     }
-    static function NOT_BETWEEN($arg1, $arg2)
-    {
-        $btw1 =   "btw" . random_int(0, 2000);
-        $btw2 =   "btw" . random_int(0, 2000);
+    // static function NOT_BETWEEN($arg1, $arg2)
+    // {
+    //     $btw1 =   "btw" . random_int(0, 2000);
+    //     $btw2 =   "btw" . random_int(0, 2000);
 
-        return [
-            "sql" => "NOT BETWEEN :" . $btw1 . " AND :" . $btw2,
-            "params" => [
-                $btw1 = $arg1,
-                $btw2 = $arg2
-            ]
-        ];
-    }
+    //     return [
+    //         "sql" => "NOT BETWEEN :" . $btw1 . " AND :" . $btw2,
+    //         "params" => [
+    //             $btw1 = $arg1,
+    //             $btw2 = $arg2
+    //         ]
+    //     ];
+    // }
 }

@@ -2,6 +2,7 @@
 
 namespace Cogent\Models;
 
+use Cogent\DB\Connector;
 use Cogent\DB\Queries;
 use Cogent\Models\Keywords;
 use Cogent\Helpers\Error;
@@ -86,6 +87,7 @@ class Model extends Queries
     static function find($options = null, $callback = null)
     {
         self::reset();
+        self::$fetch_all = true;
         try {
             // Create the table if it doesn't exist
             // $class = new $calledClass;
@@ -100,8 +102,42 @@ class Model extends Queries
 
             if (is_array($options)) {
                 foreach ($options as $key => $value) {
-                    if (is_string($key)) self::$query .= "$key as `$value`, ";
-                    else self::$query .= "$value, ";
+                    self::$query .= "$value, ";
+                }
+                self::$query = substr(self::$query, 0, strlen(self::$query) - 2);
+            }
+            // If data passed in is a string
+
+            self::$query .= " from `" . strtolower(self::$className) . "`";
+        }
+        // Catch error
+        catch (\Throwable $th) {
+            self::$error = Error::createError($th->getMessage(), Error::SELECT_ERROR);
+        }
+        if (is_callable($callback)) {
+            $callback(self::$result, (object)self::$error);
+        }
+        return new static;
+    }
+    static function findOne($options = null, $callback = null)
+    {
+        self::reset();
+        self::$fetch_one = true;
+        try {
+            // Create the table if it doesn't exist
+            // $class = new $calledClass;
+            $class = new Model;
+            $class->createTable();
+            // Find data
+            self::$query = KEYWORDS::SELECT . " ";
+            // check if it's an array
+            if (is_null($options) || empty(($options)) || count($options) == 0) {
+                self::$query .= "*";
+            }
+
+            if (is_array($options)) {
+                foreach ($options as $key => $value) {
+                    self::$query .= "$value, ";
                 }
                 self::$query = substr(self::$query, 0, strlen(self::$query) - 2);
             }
@@ -145,11 +181,10 @@ class Model extends Queries
     static function where(...$args)
     {
         if (empty($args) || count($args) == 0) throw new \Exception("No data passed in");
+
         // Remove or and from the end of the query
         $split = explode(" ", trim(self::$query));
         $lastWord = trim($split[count($split) - 1]);
-
-        // return new static;
 
         // Check if string has the key word AND or OR then remove them
         if (!in_array(strtolower($lastWord), ["or", "and"])) {
@@ -165,21 +200,36 @@ class Model extends Queries
              * 
              */
             foreach ($args as $key => $value) {
+                // Check if the value passed was a string
                 if (is_string($value)) {
-                    self::$query .= ("`$key` $value AND ");
+                    self::$query .= ("`$key` = :$key AND ");
+                    self::$executeArray[":$key"] = $value;
                 }
                 if (is_array($value)) {
                     foreach ($value as $k => $v) {
                         // IF the items passed are normal array items
-                        if (is_numeric($k)) self::$query .= ("$key $v AND ");
-
-                        /* pass in the sql of the value
-                        this was done because keywords like between are written as named parameters 
-                        **/
-                        if (is_string($k)) {
-                            self::$query .= $key . " " . $value['sql'];
-                            break;
+                        if (is_numeric($k) && is_object($v)) {
+                            if (isset($v->operator)) {
+                                self::$query .= ("$key $v->operator :$key AND ");
+                                self::$executeArray[":$key"] = $v->value;
+                            } else if (isset($v->sql)) {
+                                self::$query .= ("$key $v->sql AND ");
+                                self::$executeArray[":__btw1"] = $v->params->btw1;
+                                self::$executeArray[":__btw2"] = $v->params->btw2;
+                            }
+                        } else if (is_numeric($k) && is_string($v)) {
+                            self::$query .= ("$key = $v AND ");
                         }
+                    }
+                }
+                if (is_object($value)) {
+                    if (isset($value->sql))
+                        self::$query .= ("$key $value->sql AND ");
+                    self::$executeArray[":__btw1"] = $v->params->btw1;
+                    self::$executeArray[":__btw2"] = $v->params->btw2;
+                    if (isset($value->operator)) {
+                        self::$query .= ("$key $value->operator :$key AND ");
+                        self::$executeArray[":$key"] = $value->value;
                     }
                 }
             }
@@ -191,11 +241,14 @@ class Model extends Queries
          */
         else if (count($args) == 2) {
             if (!is_array($args[1])) {
-                self::$query .= " (`$args[0]` = '$args[1]') AND";
-            } else if (is_array($args[1])) {
-                foreach ($args[1] as $key => $value) {
-                    self::$query .= " (`$args[0]` = '$value') AND";
-                }
+                self::$query .= " (`$args[0]` = :$args[0]) AND";
+
+                if (is_object($args[1])) {
+                    if (isset($args[1]->operator)) {
+                        self::$executeArray[":$args[0]"] = $args[1]->value;
+                    }
+                } else
+                    self::$executeArray[":$args[0]"] = $args[1];
             }
         }
         /**
@@ -203,7 +256,8 @@ class Model extends Queries
       Arguments are two example (id,>, 1)
          */
         else if (count($args) == 3) {
-            self::$query .= " (" . $args[0] . " " . $args[1] . " " . $args[2] . ") AND";
+            self::$query .= "(" . $args[0] . " " . $args[1] . " :" . $args[0] . ") AND";
+            self::$executeArray[":$args[0]"] = $args[2];
         }
         return new static;
     }
@@ -226,26 +280,6 @@ class Model extends Queries
         }
     }
 
-    function whereIn($field = null, $data)
-    {
-        self::$query .= "`$field` IN (" . implode(",", $data) . ")";
-    }
-    function whereNotIn($data = null)
-    {
-    }
-    function whereBetween($data = null)
-    {
-    }
-    function whereNotBetween($data = null)
-    {
-    }
-    function whereNull($data = null)
-    {
-    }
-    function whereNotNull($data = null)
-    {
-    }
-
     function limit($number)
     {
         self::$query .= " " . KEYWORDS::LIMIT . "  $number";
@@ -266,11 +300,27 @@ class Model extends Queries
 
     function get($callback = null)
     {
+        // Remove or and from the end of the query
+        static::$query  = static::removeAndOr(static::$query);
 
-        echo (self::$query) . "\n";
+        try {
+            $stmt = static::$connection->prepare(static::$query);
+            $stmt->execute(static::$executeArray);
+
+            if (static::$fetch_all) static::$result = $stmt->fetchAll(Connector::FETCH_OBJ);
+            else if (static::$fetch_one) static::$result = $stmt->fetch(Connector::FETCH_OBJ);
+        } catch (\Throwable $th) {
+            self::$error = Error::createError($th->getMessage(), Error::INSERT_ERROR);
+        } finally {
+            static::reset();
+        }
+        if (is_callable($callback)) {
+            $callback((object)self::$error);
+        }
+        return (object) self::$result;
     }
 
-    static function removeAndOr($query)
+    protected static function removeAndOr($query)
     {
         $split = explode(" ", trim($query));
         $lastWord = ($split[count($split) - 1]);
@@ -284,12 +334,22 @@ class Model extends Queries
 
     static function sum($column, $alias = null)
     {
+        self::$query .= KEYWORDS::SUM . " (`$column`) " . ($alias ? "AS $alias" : "");
+        return new static;
     }
     static function count($column, $alias = null)
     {
-        self::$query .= "COUNT($column)";
-
-        !is_null($alias) ? self::$query .= " as $alias" : "";
+        self::$query .= KEYWORDS::COUNT . " (`$column`) " . ($alias ? "AS $alias" : "");
         return new static;
+    }
+    static function avg($column, $alias = null)
+    {
+        self::$query .= KEYWORDS::AVG . " (`$column`) " . ($alias ? "AS $alias" : "");
+        return new static;
+    }
+
+    function query()
+    {
+        return  static::removeAndOr(static::$query);
     }
 }
