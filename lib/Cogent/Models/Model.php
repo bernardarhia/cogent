@@ -218,7 +218,7 @@ class Model extends Queries
                                 self::$executeArray[":__btw2"] = $v->params->btw2;
                             }
                         } else if (is_numeric($k) && is_string($v)) {
-                            self::$query .= ("$key = $v AND ");
+                            self::$query .= ("$key = '$v' AND ");
                         }
                     }
                 }
@@ -261,25 +261,6 @@ class Model extends Queries
         }
         return new static;
     }
-    function whereLike($data = null)
-    {
-        if (is_array($data)) {
-            foreach ($data as $key => $value) {
-                self::$query .= "`$key` LIKE :$key AND ";
-            }
-            self::$query = substr(self::$query, 0, strlen(self::$query) - 4);
-        }
-    }
-    function whereNotLike($data = null)
-    {
-        if (is_array($data)) {
-            foreach ($data as $key => $value) {
-                self::$query .= "`$key` NOT LIKE :$key AND ";
-            }
-            self::$query = substr(self::$query, 0, strlen(self::$query) - 4);
-        }
-    }
-
     function limit($number)
     {
         self::$query .= " " . KEYWORDS::LIMIT . "  $number";
