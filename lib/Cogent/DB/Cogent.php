@@ -2,7 +2,6 @@
 
 namespace Cogent\DB;
 
-use Cogent\DataTypes\DataTypes;
 use Cogent\Interfaces\SchemaInterface;
 use Cogent\Models\Model;
 use Cogent\Helpers\Error;

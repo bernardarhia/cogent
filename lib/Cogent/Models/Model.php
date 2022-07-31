@@ -83,6 +83,20 @@ class Model extends Queries
         }
         return (object) self::$result;
     }
+    /**
+     * This section is purposefully designed for joint statements.
+     * 
+     */
+    static function join($tableName, $on)
+    {
+        self::$query .= " INNER JOIN `$tableName` ON ";
+        foreach ($on as $key => $value) {
+            self::$query .= "`$key` = `$value`";
+        }
+
+
+        return new static;
+    }
 
     static function find($options = null, $callback = null)
     {
@@ -170,6 +184,24 @@ class Model extends Queries
         return new static;
     }
 
+    static function delete($options = null)
+    {
+        self::reset();
+        try {
+            // Create the table if it doesn't exist
+            // $class = new $calledClass;
+            $class = new Model;
+            $class->createTable();
+            // Find data
+            self::$query = KEYWORDS::DELETE . " FROM `" . strtolower(self::$className) . "`";
+        }
+        // Catch error
+        catch (\Throwable $th) {
+            self::$error = Error::createError($th->getMessage(), Error::DELETE_ERROR);
+        }
+        return new static;
+    }
+
     function or($data = [])
     {
         // Remove or and from the end of the query
@@ -241,7 +273,7 @@ class Model extends Queries
          */
         else if (count($args) == 2) {
             if (!is_array($args[1])) {
-                self::$query .= " (`$args[0]` = :$args[0]) AND";
+                self::$query .= "(`$args[0]` = :$args[0]) AND ";
 
                 if (is_object($args[1])) {
                     if (isset($args[1]->operator)) {
@@ -282,14 +314,37 @@ class Model extends Queries
     function get($callback = null)
     {
         // Remove or and from the end of the query
-        static::$query  = static::removeAndOr(static::$query);
+        static::$query  = static::query() . ";";
 
+        // print_r(static::$query);
+        // die;
         try {
             $stmt = static::$connection->prepare(static::$query);
             $stmt->execute(static::$executeArray);
 
             if (static::$fetch_all) static::$result = $stmt->fetchAll(Connector::FETCH_OBJ);
             else if (static::$fetch_one) static::$result = $stmt->fetch(Connector::FETCH_OBJ);
+        } catch (\Throwable $th) {
+            self::$error = Error::createError($th->getMessage(), Error::INSERT_ERROR);
+        } finally {
+            static::reset();
+        }
+        if (is_callable($callback)) {
+            $callback((object)self::$error);
+        }
+        return (object) self::$result;
+    }
+    function run($callback = null)
+    {
+        // Remove or and from the end of the query
+        static::$query  = static::removeAndOr(static::$query);
+
+        try {
+            $stmt = static::$connection->prepare(static::$query);
+            $executed = $stmt->execute(static::$executeArray);
+
+            if ($executed) static::$result = ["success" =>  $stmt->rowCount() ?? true, "affectedRows" => $stmt->rowCount()];
+            else static::$result = ["success" => false, "error" => $stmt->errorInfo()];
         } catch (\Throwable $th) {
             self::$error = Error::createError($th->getMessage(), Error::INSERT_ERROR);
         } finally {
@@ -331,6 +386,24 @@ class Model extends Queries
 
     function query()
     {
-        return  static::removeAndOr(static::$query);
+        return  strtolower(static::removeAndOr(static::$query));
+    }
+
+    static function create($data)
+    {
+        self::$query = "INSERT INTO " . strtolower(self::$className) . " (";
+        self::$executeArray = [];
+        foreach ($data as $key => $value) {
+            self::$query .= "`$key`,";
+            self::$executeArray[":$key"] = $value;
+        }
+        self::$query = trim(self::$query, ",");
+        self::$query .= ") VALUES (";
+        foreach (self::$executeArray as $key => $value) {
+            self::$query .= "$key,";
+        }
+        self::$query = trim(self::$query, ",");
+        self::$query .= ")";
+        return new static(self::$query, self::$executeArray);
     }
 }

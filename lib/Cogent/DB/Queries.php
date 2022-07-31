@@ -15,6 +15,7 @@ class Queries
     protected static $executeArray = null;
     protected static $query = null;
     protected static $connection = null;
+    // protected static $tableName = null;
     /**
      * 
      * @param object $fetchMode
@@ -91,5 +92,6 @@ class Queries
         // self::$connection = null;
         self::$fetch_all = null;
         self::$fetch_one = null;
+        // self::$className = null;
     }
 }
