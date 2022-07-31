@@ -18,7 +18,7 @@ $playerSchema = new Schema([
     "charset" => "utf8"
 ]);
 
-Cogent\DB\Cogent::model("Players", $playerSchema);
+Cogent\DB\Cogent::model("Students", $playerSchema);
 
 /**
  * type string -

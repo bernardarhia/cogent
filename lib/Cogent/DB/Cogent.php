@@ -15,7 +15,8 @@ class Cogent extends Model implements SchemaInterface
         // $schema = new Schema;
         // create new class using the model name and extend the base class
         $className = ucfirst($class);
-        $class = "class $className extends Cogent\DB\Cogent{
+
+        $createdClass = "class $className extends Cogent\DB\Cogent{
             public function __construct(\$dataArr=[]){
                 foreach (\$dataArr as \$key => \$value) {
                         static::\$dataArr[\$key] = \$value;
@@ -23,7 +24,8 @@ class Cogent extends Model implements SchemaInterface
                     }
             }
          }";
-        eval($class);
+        eval($createdClass);
+
         $NewClass = new $className;
         return $NewClass;
     }

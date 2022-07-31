@@ -30,7 +30,7 @@ trait HelpersController
                 }
             }
             if ($data_key == "softDelete" && $arr['softDelete'] == true) {
-                $returnable['deleted_at'] = "datetime default null on delete current_timestamp";
+                $returnable['deleted_at'] = "datetime default null on update current_timestamp";
             }
             if (is_string($data_value)) {
                 $data_value = strtolower($data_value);

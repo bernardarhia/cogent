@@ -37,6 +37,7 @@ class Model extends Queries
         $sql = "create table if not exists `" . strtolower(self::$className) . "` " . $sql;
         try {
             $stmt = static::$connection->query($sql);
+            // self::$className = "";
         } catch (\Throwable $th) {
             static::$error = Error::createError($th->getMessage(), Error::TABLE_CREATION_ERROR);
         }
@@ -91,7 +92,7 @@ class Model extends Queries
     {
         self::$query .= " INNER JOIN `$tableName` ON ";
         foreach ($on as $key => $value) {
-            self::$query .= "`$key` = `$value`";
+            self::$query .= "$key = $value";
         }
 
 
@@ -107,6 +108,10 @@ class Model extends Queries
             // $class = new $calledClass;
             $class = new Model;
             $class->createTable();
+
+            // get parent class of the called class
+            $calledClass = get_called_class();
+            self::$className = strtolower($calledClass);
             // Find data
             self::$query = KEYWORDS::SELECT . " ";
             // check if it's an array
@@ -131,11 +136,12 @@ class Model extends Queries
         if (is_callable($callback)) {
             $callback(self::$result, (object)self::$error);
         }
+        // self::$className = "";
         return new static;
     }
     static function findOne($options = null, $callback = null)
     {
-        self::reset();
+        // self::reset();
         self::$fetch_one = true;
         try {
             // Create the table if it doesn't exist
@@ -404,6 +410,7 @@ class Model extends Queries
         }
         self::$query = trim(self::$query, ",");
         self::$query .= ")";
-        return new static(self::$query, self::$executeArray);
+
+        return new static;
     }
 }
