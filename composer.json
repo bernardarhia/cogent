@@ -1,0 +1,25 @@
+{
+    "name":"bernard-arhia/cogent",
+    "description": "A very simple and lightweight orm library for querying mysql database in PHP.",
+    "type":"library",
+    "keywords": ["query", "db", "php-orm", "orm", "api", "php", "mongoose php"],
+    "autoload": {
+        "psr-4": {
+            "Cogent\\":"lib/Cogent"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Cogent\\": "lib/Cogent"
+        }
+    },
+    "author":{
+        "name":"Bernard Arhia",
+        "email":"bernardarhia@gmail.com",
+        "role":"Developer"
+    },
+    "license":"MIT",
+    "require" : {
+        "php" : "^8.0.0"
+    }
+}
